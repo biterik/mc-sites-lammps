@@ -1,0 +1,94 @@
+LAMMPS (11 Feb 2026 - MCnoforce-localE)
+# fix mc/sites: hybrid MD/MC with a dynamic site catalogue
+# lj/cut fcc host thermostatted at 30 K; every 10 MD steps one MC block of
+# 20 grand-canonical trial flips runs on the current Voronoi-vertex site
+# catalogue (octahedral window rmin 1.55 - 2.1); the catalogue follows the
+# thermal displacements of the host
+
+units           metal
+boundary        p p p
+atom_style      atomic
+
+lattice         fcc 3.52
+Lattice spacing in x,y,z = 3.52 3.52 3.52
+region          box block 0 2 0 2 0 2
+create_box      2 box
+Created orthogonal box = (0 0 0) to (7.04 7.04 7.04)
+  1 by 1 by 1 MPI processor grid
+create_atoms    1 box
+Created 32 atoms
+  using lattice units in orthogonal box = (0 0 0) to (7.04 7.04 7.04)
+  create_atoms CPU = 0.000 seconds
+mass            1 58.69
+mass            2 1.008
+
+pair_style      lj/cut 5.0
+pair_coeff      1 1 0.20 2.30
+pair_coeff      1 2 0.02 1.50
+pair_coeff      2 2 0.02 1.00
+
+timestep        0.0005
+velocity        all create 30.0 48291 mom yes rot yes
+
+compute         SITES all sites/voronoi rmerge 0.3 rmin 1.55 rmax 2.1
+
+fix             INT all nvt temp 30.0 30.0 0.05
+fix             MC all mc/sites 10 20 2 62717 300.0 sites c_SITES mode gc mu -0.15
+
+thermo          50
+thermo_style    custom step atoms temp pe f_MC[4] f_MC[5] f_MC[7]
+
+run             500
+Generated 0 of 1 mixed pair_coeff terms from geometric mixing rule
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 7
+  ghost atom cutoff = 7
+  binsize = 3.5, bins = 3 3 3
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair lj/cut, perpetual
+      attributes: half, newton on
+      pair build: half/bin/atomonly/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 3.085 | 3.085 | 3.085 Mbytes
+   Step        Atoms         Temp          PotEng        f_MC[4]        f_MC[5]        f_MC[7]    
+         0          32   30            -50.003429      0              0              0            
+        50          41   60.670785     -50.83406       9              41             0.51         
+       100          38   52.661264     -50.584141      6              33             0.55         
+       150          41   46.878405     -51.014671      9              32             0.55666667   
+       200          36   32.910668     -50.460786      4              35             0.565        
+       250          42   63.746515     -51.092851      10             38             0.532        
+       300          42   49.254701     -51.171434      10             32             0.52666667   
+       350          43   69.678188     -51.207119      11             32             0.53285714   
+       400          41   67.153665     -50.923569      9              28             0.53625      
+       450          42   38.93457      -51.129988      10             33             0.54666667   
+       500          40   32.098737     -50.969114      8              30             0.55         
+Loop time of 0.0914147 on 1 procs for 500 steps with 40 atoms
+
+Performance: 236.286 ns/day, 0.102 hours/ns, 5469.579 timesteps/s, 218.783 katom-step/s
+99.5% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.0029334  | 0.0029334  | 0.0029334  |   0.0 |  3.21
+Neigh   | 0.0010615  | 0.0010615  | 0.0010615  |   0.0 |  1.16
+Comm    | 0.00062968 | 0.00062968 | 0.00062968 |   0.0 |  0.69
+Output  | 2.2627e-05 | 2.2627e-05 | 2.2627e-05 |   0.0 |  0.02
+Modify  | 0.086631   | 0.086631   | 0.086631   |   0.0 | 94.77
+Other   |            | 0.000137   |            |       |  0.15
+
+Nlocal:             40 ave          40 max          40 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:            832 ave         832 max         832 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:           3182 ave        3182 max        3182 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 3182
+Ave neighs/atom = 79.55
+Neighbor list builds = 1150
+Dangerous builds = 0
+Total wall time: 0:00:00

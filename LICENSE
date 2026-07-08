@@ -1,0 +1,14 @@
+SPDX-License-Identifier: GPL-2.0-only
+
+This project contributes code to LAMMPS and is distributed under the same terms
+as LAMMPS: the GNU General Public License, version 2 only (GPL-2.0-only).
+
+Each contributed source file (compute_sites_voronoi.{h,cpp},
+fix_mc_sites.{h,cpp}) carries the standard LAMMPS copyright and GPL notice at the
+top of the file, followed by the contributing author's name and contact address.
+
+The full text of the GNU General Public License, version 2, is available at:
+https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
+
+and is distributed with LAMMPS in the top-level LICENSE file of the LAMMPS source
+tree obtained during the build (see README, Step 1).

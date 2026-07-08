@@ -1,0 +1,90 @@
+LAMMPS (11 Feb 2026 - MCnoforce-localE)
+# fix mc/sites: non-interacting lattice-gas (Langmuir) check
+# fcc host with pair_style zero; the dynamic sites/voronoi catalogue with
+# rmin 1.6 selects the 32 octahedral interstitial sites; at mu = 0 the
+# site occupancy must converge to theta = 0.5 (f_MC[6] column)
+
+units           metal
+boundary        p p p
+atom_style      atomic
+
+lattice         fcc 3.52
+Lattice spacing in x,y,z = 3.52 3.52 3.52
+region          box block 0 2 0 2 0 2
+create_box      2 box
+Created orthogonal box = (0 0 0) to (7.04 7.04 7.04)
+  1 by 1 by 1 MPI processor grid
+create_atoms    1 box
+Created 32 atoms
+  using lattice units in orthogonal box = (0 0 0) to (7.04 7.04 7.04)
+  create_atoms CPU = 0.000 seconds
+mass            1 58.69
+mass            2 1.008
+
+pair_style      zero 4.0
+pair_coeff      * *
+
+compute         SITES all sites/voronoi rmerge 0.3 rmin 1.6 rmax 2.0
+
+fix             MC all mc/sites 1 20 2 29494 300.0 sites c_SITES mode gc mu 0.0
+
+thermo          50
+thermo_style    custom step atoms f_MC[4] f_MC[5] f_MC[6] f_MC[7]
+
+run             500
+WARNING: No fixes with time integration, atoms won't move
+For more information see https://docs.lammps.org/err0028 (src/verlet.cpp:60)
+Generated 0 of 1 mixed pair_coeff terms from geometric mixing rule
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 6
+  ghost atom cutoff = 6
+  binsize = 3, bins = 3 3 3
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair zero, perpetual
+      attributes: half, newton on
+      pair build: half/bin/atomonly/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 3.085 | 3.085 | 3.085 Mbytes
+   Step        Atoms       f_MC[4]        f_MC[5]        f_MC[6]        f_MC[7]    
+         0          32   0              0              0              0            
+WARNING: Fix mc/sites MC: acceptance ratio 1 outside [0.01,0.99] for 10 consecutive blocks (src/MC/fix_mc_sites.cpp:619)
+        50          60   28             62             0.4516129      1            
+       100          40   8              15             0.53333333     1            
+       150          56   24             50             0.48           1            
+       200          48   16             30             0.53333333     1            
+       250          54   22             39             0.56410256     1            
+       300          50   18             33             0.54545455     1            
+       350          48   16             38             0.42105263     1            
+       400          50   18             37             0.48648649     1            
+       450          58   26             45             0.57777778     1            
+       500          50   18             32             0.5625         1            
+Loop time of 0.494183 on 1 procs for 500 steps with 50 atoms
+
+Performance: 87.417 ns/day, 0.275 hours/ns, 1011.771 timesteps/s, 50.589 katom-step/s
+99.7% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 2.7331e-05 | 2.7331e-05 | 2.7331e-05 |   0.0 |  0.01
+Neigh   | 0.013932   | 0.013932   | 0.013932   |   0.0 |  2.82
+Comm    | 0.0020138  | 0.0020138  | 0.0020138  |   0.0 |  0.41
+Output  | 4.9167e-05 | 4.9167e-05 | 4.9167e-05 |   0.0 |  0.01
+Modify  | 0.47794    | 0.47794    | 0.47794    |   0.0 | 96.71
+Other   |            | 0.0002173  |            |       |  0.04
+
+Nlocal:             50 ave          50 max          50 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:            999 ave         999 max         999 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:           3260 ave        3260 max        3260 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 3260
+Ave neighs/atom = 65.2
+Neighbor list builds = 11500
+Dangerous builds = 0
+Total wall time: 0:00:00
