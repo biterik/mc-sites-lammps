@@ -1,0 +1,237 @@
+{
+  "activity": {
+    "commits_30d": 2,
+    "contributors_total": 2,
+    "issues_closed_30d": 0,
+    "issues_opened_30d": 0,
+    "prs_merged_30d": 1,
+    "prs_opened_30d": 1
+  },
+  "collected_at": "2026-07-09T06:54:55Z",
+  "date": "2026-07-09",
+  "derived": {
+    "clones_last_30d": 19,
+    "clones_last_7d": 19,
+    "downloads_gained_30d": 0,
+    "downloads_total": 0,
+    "funnel_30d": {
+      "downloads_gained": 0,
+      "stars_gained": 0,
+      "unique_cloners": 14,
+      "unique_visitors": 3
+    },
+    "health": {
+      "components": {
+        "activity": 19,
+        "community": 16,
+        "release_adoption": 0,
+        "traffic_trend": 100
+      },
+      "note": "heuristic composite \u2014 weights fixed in v1, configurable later",
+      "score": 49,
+      "weights": {
+        "activity": 0.3,
+        "community": 0.2,
+        "release_adoption": 0.1,
+        "traffic_trend": 0.4
+      }
+    },
+    "history_days": 15,
+    "star_forecast": {
+      "eta_exponential": null,
+      "eta_linear": null,
+      "next_milestone": 10,
+      "stars_per_day": null
+    },
+    "stars_gained_30d": 0,
+    "stars_gained_7d": 0,
+    "stars_now": 0,
+    "views_last_30d": 7,
+    "views_last_7d": 7,
+    "views_prev_7d": 0,
+    "windows": {
+      "30d": {
+        "clones": 19,
+        "downloads_gained": 0,
+        "stars_gained": 0,
+        "unique_visitors": 3,
+        "views": 7
+      },
+      "365d": {
+        "clones": 19,
+        "downloads_gained": 0,
+        "stars_gained": 0,
+        "unique_visitors": 3,
+        "views": 7
+      },
+      "90d": {
+        "clones": 19,
+        "downloads_gained": 0,
+        "stars_gained": 0,
+        "unique_visitors": 3,
+        "views": 7
+      }
+    }
+  },
+  "errors": [],
+  "meta": {
+    "archived": false,
+    "created_at": "2026-07-08T12:50:19Z",
+    "default_branch": "main",
+    "fork": false,
+    "open_issues": 0,
+    "pushed_at": "2026-07-08T15:15:11Z",
+    "size_kb": 95
+  },
+  "popularity": {
+    "forks": 0,
+    "stars": 0,
+    "subscribers": 0,
+    "watchers": 0
+  },
+  "releases": [],
+  "repo": "biterik/mc-sites-lammps",
+  "schema_version": 1,
+  "traffic": {
+    "clones": {
+      "2026-06-25": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-06-26": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-06-27": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-06-28": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-06-29": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-06-30": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-07-01": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-07-02": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-07-03": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-07-04": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-07-05": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-07-06": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-07-07": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-07-08": {
+        "count": 19,
+        "uniques": 14
+      }
+    },
+    "paths": [
+      {
+        "count": 5,
+        "path": "/biterik/mc-sites-lammps",
+        "uniques": 2
+      },
+      {
+        "count": 2,
+        "path": "/biterik/mc-sites-lammps/tree/main",
+        "uniques": 2
+      }
+    ],
+    "referrers": [
+      {
+        "count": 4,
+        "referrer": "github.com",
+        "uniques": 1
+      },
+      {
+        "count": 1,
+        "referrer": "xmail1.mpie.de",
+        "uniques": 1
+      }
+    ],
+    "views": {
+      "2026-06-25": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-06-26": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-06-27": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-06-28": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-06-29": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-06-30": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-07-01": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-07-02": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-07-03": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-07-04": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-07-05": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-07-06": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-07-07": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-07-08": {
+        "count": 7,
+        "uniques": 3
+      }
+    }
+  }
+}
