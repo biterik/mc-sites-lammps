@@ -33,7 +33,7 @@ Apple clang 21, Open MPI, serial and MPI, SMALLBIG and BIGBIG.
 | `README.md` | this file — start here |
 | `doc/` | the two LAMMPS manual pages (`fix mc/sites`, `compute sites/voronoi`) — full command reference and science |
 | `examples/` | two small, fast runnable examples + reference logs + [`examples/README.md`](examples/README.md) walkthrough |
-| `patches/` | the complete contribution as four `git am`-able patches (used by obtain-method B below) |
+| `patches/` | the complete contribution as five `git am`-able patches (used by obtain-method B below) |
 | `tests/` | the validation suite (LAMMPS inputs generated in-Python + numpy/pytest analysis) |
 | `SPEC-MC-SITES.md` | the design specification (behavioral source of truth) |
 | `LAMMPS-contributing-guide.md` | distilled LAMMPS contribution rules (for the eventual PR) |
@@ -113,11 +113,11 @@ cd lammps-mcsites
 git checkout 24da74cd73323f5e7415fdd9a9670b88535464d3
 git checkout -b feature/mc-sites
 
-# 2. apply the four patches from THIS repository (adjust the path)
+# 2. apply the five patches from THIS repository (adjust the path)
 git am /path/to/this/repo/patches/00*.patch
 
-# 3. confirm four commits were applied
-git log --oneline -4
+# 3. confirm five commits were applied
+git log --oneline -5
 ```
 
 Both methods leave you in a LAMMPS tree on branch `feature/mc-sites` containing
