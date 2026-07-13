@@ -188,12 +188,172 @@ dependencies are in `requirements-lock.txt`.
 
 ---
 
-## Command reference
+## Usage — controlling *where* atoms are inserted
 
-Full syntax, keywords, output, and restrictions are in the two manual pages:
-[`doc/fix_mc_sites.rst`](doc/fix_mc_sites.rst) and
-[`doc/compute_sites_voronoi.rst`](doc/compute_sites_voronoi.rst) (these are the same pages
-that render in the LAMMPS HTML manual once the tree is built).
+The feature is two cooperating commands. **`compute sites/voronoi` decides *where* the
+candidate sites are** — every geometric possibility (size window, region, coordination,
+occupancy) is a filter keyword on the compute. **`fix mc/sites` decides *whether and how*
+atoms are inserted or deleted** on those sites (chemical potential, rate, region, charge,
+caps). The minimal pattern is:
+
+```lammps
+compute SITES all sites/voronoi rmerge 0.3                                # find + filter candidate sites
+fix     MC    all mc/sites 100 200 2 12345 500.0 sites c_SITES mode gc mu -2.40   # run GCMC on them
+```
+
+`rmerge` is the only required argument: Voronoi vertices of a high-symmetry lattice split
+into near-coincident copies under thermal noise, so vertices closer than `rmerge` are
+merged to one site (its clearance = the minimum over the cluster). Use `rmerge` well below
+the spacing between distinct sites — **0.3 Å works for metals**. Everything else below is
+optional; **a site is kept only if it passes _all_ active criteria**, so you combine them
+freely.
+
+### 1. Select sites by size (two independent geometric classifiers)
+
+Each Voronoi vertex is the center of a locally largest empty sphere. You can bound sites by
+**either** the sphere radius **or** a probe volume — these are different measures of "how
+much room is here," and you may use one or both.
+
+| What you bound | Keywords | Units | Notes |
+|---|---|---|---|
+| **Clearance** = empty-sphere radius (distance to nearest atom) | `rmin <d>` / `rmax <d>` | distance | always computed; the cheap, default classifier |
+| **Probe Voronoi volume** (volume of the Voronoi cell a test point at the site would have among the atoms) | `vmin <v>` / `vmax <v>` | volume | matches the von Pezold *et al.* volume classification (Acta Mater. **59**, 2969, 2011); giving `vmin`/`vmax` (or `metric volume`) turns this on and adds a volume output column |
+
+Both windows default to "no bound" (`rmin 0`, `rmax +∞`, likewise for volume). All four
+thresholds may be **equal-style variables** (e.g. `rmin v_myrmin`) that are re-evaluated
+every block, so the window can be time-dependent.
+
+The clearance window is how you pick a *sublattice by geometry*. In fcc with lattice
+constant *a*, for instance:
+
+| Interstitial | Sites / cell | Clearance |
+|---|---|---|
+| Octahedral | 4 | *a*/2  ≈ 1.76 Å at *a* = 3.52 |
+| Tetrahedral | 8 | √3·*a*/4  ≈ 1.52 Å at *a* = 3.52 |
+
+So `rmin 1.6 rmax 2.0` keeps **only octahedral** sites; a lower `rmin` (e.g. `1.4`) admits
+the tetrahedral set as well. (This is exactly the `in.mc_sites.langmuir` example.)
+
+```lammps
+compute OCT all sites/voronoi rmerge 0.3 rmin 1.6 rmax 2.0                 # octahedral only
+compute BIG all sites/voronoi rmerge 0.3 vmin 8.0 vmax 20.0 metric volume  # by probe volume
+```
+
+### 2. Restrict to a region of the box
+
+`region` limits the sites geographically — charge only a surface slab, only the atoms near
+a grain boundary, only one phase, etc. It exists on **both** commands and they do different
+things:
+
+| Command | `region` keyword effect |
+|---|---|
+| `compute sites/voronoi region <rID>` | only *empty candidate sites* inside the region are produced (evaluated at build time) |
+| `fix mc/sites region <rID>` | restricts both the sites used **and** the existing species atoms eligible for deletion to the region |
+
+For a self-consistent GCMC restricted to a sub-volume, put the same region on both:
+
+```lammps
+region  slab block INF INF INF INF 10.0 30.0 units box
+compute SITES all sites/voronoi rmerge 0.3 rmin 1.6 region slab
+fix     MC    all mc/sites 100 200 2 12345 500.0 sites c_SITES mode gc mu -2.4 region slab
+```
+
+### 3. Coordination filter — surfaces, voids, subsurface (`coord`)
+
+Voronoi vertices generated in **vacuum** (outside a free surface, or in the padding of a
+non-periodic box) have large clearance but few nearby atoms — they are not real
+interstitial sites. `coord k rcut` keeps a site only if **at least `k` host atoms lie
+within `rcut`** of it, which cleanly separates buried/interstitial sites from vacuum
+vertices. By default the counted atoms are the compute group; use `hostgroup` to count a
+specific species (e.g. only the metal, ignoring already-inserted H).
+
+| Keyword | Meaning |
+|---|---|
+| `coord <k> <rcut>` | require ≥ `k` atoms within `rcut` (`k ≥ 1`, `rcut > 0`) |
+| `hostgroup <group>` | which atoms the `coord` count uses (default: the compute group) |
+
+```lammps
+# fcc slab with free surfaces in z: drop the vacuum vertices, keep only
+# sites with a full first shell of metal atoms around them
+group   metal type 1
+compute SITES all sites/voronoi rmerge 0.3 rmin 1.4 coord 6 3.5 hostgroup metal
+```
+
+Raising `k` biases toward fully-embedded (bulk-like) sites; a modest `k` (≈ 4–6 for fcc
+first shell) is enough to remove surface/vacuum artifacts while keeping true subsurface
+interstitials.
+
+### 4. Occupancy veto — don't propose on top of an existing atom (`occcut`)
+
+In a **dynamic** run the tessellation can still place a candidate vertex essentially where
+one of your Monte Carlo species atoms already sits. `occcut dist exclgroup <group>` drops
+any site within `dist` of an atom of `exclgroup` (the two keywords are required together).
+Point `exclgroup` at your inserted species so the compute only ever offers *genuinely
+empty* sites; the fix separately re-adds the occupied species atoms as deletable entries,
+so nothing is double-counted.
+
+```lammps
+group   hyd type 2
+compute SITES all sites/voronoi rmerge 0.3 rmin 1.4 occcut 0.9 exclgroup hyd
+```
+
+(The static `file` site source doesn't need this — a file site holding a species atom is
+recognized as occupied by exact position match. `occcut` is the dynamic-catalogue
+equivalent.)
+
+### 5. Everything at once
+
+The criteria are independent and order doesn't matter; a real run typically stacks several:
+
+```lammps
+compute BULK all sites/voronoi rmerge 0.3 rmin 1.4 rmax 2.5 metric volume vmin 8.0 vmax 20.0 region slab coord 6 3.5 hostgroup metal occcut 0.9 exclgroup hyd
+```
+
+That single site definition keeps a vertex only if it is octahedral-ish by clearance
+(`rmin`/`rmax`) **and** within the probe-volume window (`vmin`/`vmax`) **and** inside
+`slab` (`region`) **and** embedded with ≥ 6 metal neighbors (`coord`/`hostgroup`, no
+surface or vacuum vertices) **and** not already occupied by an inserted atom
+(`occcut`/`exclgroup`). LAMMPS input lines may be wrapped with a trailing `&` if you prefer
+one keyword per line.
+
+The compute writes one row per surviving site: `x y z clearance [volume] coord` (6 columns
+when a volume window/metric is active, 5 otherwise; the `coord` column is 0 when `coord` is
+unused), plus a global scalar = total number of sites. You can drive the fix with it, or
+just `dump local` it to analyze the interstitial-site distribution without any MC.
+
+### 6. The fix side — how insertion/deletion behaves
+
+Once the sites are chosen, `fix mc/sites` controls the sampling:
+
+| Keyword / arg | Meaning |
+|---|---|
+| `Nevery Ntrials type seed Temp` | MC block every `Nevery` steps; `Ntrials` trial flips per block; species atom `type`; RNG `seed`; MC temperature `Temp` (may be `v_...`) |
+| `sites c_ID` \| `sites file <path>` | dynamic catalogue from a compute, or a static site list (validation) |
+| `mode gc mu <value>` | grand-canonical insert/delete; `mu` is the lattice-gas chemical potential (may be `v_...`) |
+| `mode source rate <n>` | irradiation-style: `n` unconditional insertions per block, no acceptance test |
+| `region <rID>` | restrict sites and deletable atoms to a region (see §2) |
+| `overlap_cutoff <d>` | reject an insertion whose site clearance < `d` *without* an energy evaluation (default 0 = off; needs a compute catalogue) |
+| `maxspecies <N>` | stop inserting once there are `N` species atoms (upper occupancy cap) |
+| `charge <q>` | charge given to inserted atoms (needs a charge atom style) |
+| `tfac_insert <f>` | scale factor on the inserted-atom velocity temperature (default 1.0) |
+
+Acceptance is the symmetric lattice-gas rule
+`P_ins = min(1, e^(−β(ΔU − μ)))`, `P_del = min(1, e^(−β(ΔU + μ)))`, with ΔU a **full**
+energy evaluation (as verified in the source: `fix_mc_sites.cpp`, `attempt_insertion` /
+`attempt_deletion`). Deletion genuinely removes the atom for the trial and restores it
+exactly on rejection, which is more correct than `fix gcmc`'s exclusion-group masking for
+many-body/ML potentials.
+
+**Output vector** (length 8, e.g. `f_MC[6]`): (1) trial attempts, (2) accepted insertions,
+(3) accepted deletions, (4) current species count *N*, (5) catalogue size *M*, (6)
+instantaneous site concentration *N*/*M*, (7) overall acceptance ratio, (8) skipped
+source-mode insertions.
+
+Full syntax, defaults, and restrictions are in the two manual pages —
+[`doc/compute_sites_voronoi.rst`](doc/compute_sites_voronoi.rst) and
+[`doc/fix_mc_sites.rst`](doc/fix_mc_sites.rst) — which render in the LAMMPS HTML manual once
+the tree is built. The runnable [`examples/`](examples/) (with a
+[walkthrough](examples/README.md)) show the octahedral Langmuir check and a hybrid MD/MC run.
 
 ---
 
