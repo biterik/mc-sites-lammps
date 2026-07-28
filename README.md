@@ -18,11 +18,27 @@ machine-learning potentials.
 > pull request to LAMMPS. Feedback is welcome on everything — see
 > [Open questions for reviewers](#open-questions-for-reviewers).
 
-**Validation:** 43/43 local tests pass (geometry, Langmuir isotherm, round-trip energy
+**Version: v1.1** (patch series 0001–0010; v1.0 = 0001–0009). New since the 5-patch
+review round: Kokkos `/kk` variants of both styles (patches 0006–0009), a `check`
+per-block consistency-verification keyword, and `reset_timestep`-safe block scheduling
+(patch 0010).
+
+**Validation:** 44 local tests pass (geometry, Langmuir isotherm, round-trip energy
 conservation, catalogue rebuild-invariance, a 2¹² brute-force enumeration cross-check,
-hybrid MD/MC, source mode, fix stacking, and serial/MPI/BIGBIG consistency). Built and
-tested against the GRACE fork `thermoatoms/lammps` @ `24da74cd` (LAMMPS **"11 Feb 2026"**),
-Apple clang 21, Open MPI, serial and MPI, SMALLBIG and BIGBIG.
+hybrid MD/MC, source mode, fix stacking, serial/MPI/BIGBIG consistency, and a high-rank
+regression test). Built and tested against the GRACE fork `thermoatoms/lammps` @
+`24da74cd` (LAMMPS **"11 Feb 2026"**), Apple clang 21 and gcc 13, Open MPI and Intel
+MPI, serial and MPI, SMALLBIG and BIGBIG. On the CPU side the MC acceptance is
+rank-count-consistent from 1 to 256 MPI ranks (EAM Ni/H production benchmark, per-block
+consistency checks green throughout), a 32-rank MEAM create/delete round trip restores
+the baseline energy bit-exactly, and the Korbmacher Ni–H isotherm anchor is reproduced
+at 300 K (plateau within ~6% as an upper bound, lattice constants within 1%).
+
+> **⚠ GPU implementation NOT yet tested.** The Kokkos `/kk` variants compile, register,
+> and pass the full CPU test suite under a Kokkos-Serial build, but they are **not yet
+> validated on real GPUs**: an unresolved acceptance discrepancy of a hipcc-built binary
+> on MI300A is under investigation, and the A100 (discrete-memory) sign-off has not been
+> run. Treat `-sf kk` as experimental and use the plain CPU styles for production.
 
 ---
 
@@ -33,7 +49,7 @@ Apple clang 21, Open MPI, serial and MPI, SMALLBIG and BIGBIG.
 | `README.md` | this file — start here |
 | `doc/` | the two LAMMPS manual pages (`fix mc/sites`, `compute sites/voronoi`) — full command reference and science |
 | `examples/` | two small, fast runnable examples + reference logs + [`examples/README.md`](examples/README.md) walkthrough |
-| `patches/` | the complete contribution as five `git am`-able patches (used by obtain-method B below) |
+| `patches/` | the complete contribution as ten `git am`-able patches — 0001–0005 CPU styles + docs + examples, 0006–0009 Kokkos `/kk` port (GPU-untested, see above), 0010 `check` keyword + scheduling hardening (used by obtain-method B below) |
 | `tests/` | the validation suite (LAMMPS inputs generated in-Python + numpy/pytest analysis) |
 | `SPEC-MC-SITES.md` | the design specification (behavioral source of truth) |
 | `LAMMPS-contributing-guide.md` | distilled LAMMPS contribution rules (for the eventual PR) |
@@ -113,7 +129,7 @@ cd lammps-mcsites
 git checkout 24da74cd73323f5e7415fdd9a9670b88535464d3
 git checkout -b feature/mc-sites
 
-# 2. apply the five patches from THIS repository (adjust the path)
+# 2. apply the ten patches from THIS repository (adjust the path)
 git am /path/to/this/repo/patches/00*.patch
 
 # 3. confirm five commits were applied
@@ -368,10 +384,12 @@ fork (no upstream `ENERGY_ONLY` bit) and current upstream LAMMPS.
 
 ---
 
-## Known limitations (v1)
+## Known limitations (v1.1)
 
 Requires a 3d simulation, atom IDs, and per-type masses; reneighboring must be on. The MC
-bookkeeping is serial (energy evaluation is parallel). Not supported in v1: Kokkos/GPU/INTEL
+bookkeeping is serial (energy evaluation is parallel). Kokkos `/kk` variants exist since
+v1.1 but are **not yet GPU-validated** (see the warning at the top) — treat them as
+experimental and use the plain CPU styles for production. Not supported: INTEL/OPENMP
 accelerated variants, ReaxFF and charge-equilibration potentials, core-shell models,
 molecule insertion, and 2d. The static `file` site source assumes species atoms do not move
 between blocks; for moving atoms use a dynamic compute catalogue with `occcut`.

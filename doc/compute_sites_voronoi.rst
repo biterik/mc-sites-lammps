@@ -1,7 +1,10 @@
 .. index:: compute sites/voronoi
+.. index:: compute sites/voronoi/kk
 
 compute sites/voronoi command
 =============================
+
+Accelerator Variants: *sites/voronoi/kk*
 
 Syntax
 """"""
@@ -120,6 +123,10 @@ from a compute as input, e.g. :doc:`dump local <dump>` or
 :doc:`fix ave/histo <fix_ave_histo>`.  Positions are in distance
 :doc:`units <units>`, the clearance in distance units, the volume in
 volume units.
+
+----------
+
+.. include:: accel_styles.rst
 
 Restrictions
 """"""""""""

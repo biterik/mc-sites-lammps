@@ -116,7 +116,14 @@ dump_modify D format float %.10g sort id
     rows = np.array([list(map(float, line.split())) for line in text[idx + 1: idx + 1 + nrows]])
     species = rows[rows[:, 1] == 2]
     assert species.shape[0] == 16
+    # minimum-image distances: a site emitted at a box face (centroid fp noise
+    # of a few 1e-16 may put it marginally outside [0,L)) is remapped by the
+    # fix, so the atom can legitimately sit at the periodic image of the
+    # analytic position (observed with gcc/x86: site y = -4e-16 -> atom at L-ulp)
+    L = NCELL * A0
     site_arr = np.array(oct_sites)
     for row in species:
-        dmin = np.min(np.linalg.norm(site_arr - row[2:5], axis=1))
+        delta = site_arr - row[2:5]
+        delta -= L * np.round(delta / L)
+        dmin = np.min(np.linalg.norm(delta, axis=1))
         assert dmin < 1e-6, f"species atom at {row[2:5]} is {dmin:.3e} from nearest oct site"

@@ -1,7 +1,10 @@
 .. index:: fix mc/sites
+.. index:: fix mc/sites/kk
 
 fix mc/sites command
 ====================
+
+Accelerator Variants: *mc/sites/kk*
 
 Syntax
 """"""
@@ -36,7 +39,7 @@ Syntax
          value = number of unconditional insertions per invocation
 
 * zero or more keyword/value pairs may be appended
-* keyword = *region* or *tfac_insert* or *charge* or *maxspecies* or *overlap_cutoff*
+* keyword = *region* or *tfac_insert* or *charge* or *maxspecies* or *overlap_cutoff* or *check*
 
   .. parsed-literal::
 
@@ -46,6 +49,8 @@ Syntax
        *maxspecies* value = skip insertions above this many species atoms
        *overlap_cutoff* value = reject insertions at sites with clearance below this
                                 without an energy evaluation (default 0.0 = off)
+       *check* value = *yes* or *no* = verify internal state consistency after
+                       every MC block (default *no*)
 
 Examples
 """"""""
@@ -124,6 +129,16 @@ Multiple mc/sites fixes may be stacked, one per species (each with its
 own type, mu, and site compute); two instances driving the same atom
 type are rejected.
 
+The *check* keyword enables a state-consistency verification after
+every MC block: the global atom count is compared against the sum of
+per-processor counts, the number of species atoms is compared against
+the catalogue occupancy, and (in *gc* mode) the stored Metropolis
+reference energy is compared against a fresh full-energy evaluation.
+Any mismatch stops the run with an error identifying the first
+inconsistent block.  This costs one extra full-energy evaluation per
+block and is intended for validating new potentials, large processor
+counts, or modified builds before production use.
+
 .. note::
 
    The MC species atoms must not be time-integrated during the MC
@@ -142,6 +157,10 @@ type are rejected.
    the per-trial cost.  For all other pair styles the full-energy
    evaluation computes (and discards) forces, exactly like
    :doc:`fix gcmc <fix_gcmc>`.
+
+----------
+
+.. include:: accel_styles.rst
 
 Restart, fix_modify, output, run start/stop, minimize info
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -201,4 +220,4 @@ Default
 """""""
 
 tfac_insert = 1.0; no charge assignment; no region; no maxspecies cap;
-overlap_cutoff = 0.0 (off).
+overlap_cutoff = 0.0 (off); check = no.
