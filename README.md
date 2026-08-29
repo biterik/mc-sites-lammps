@@ -18,14 +18,34 @@ machine-learning potentials.
 > pull request to LAMMPS. Feedback is welcome on everything — see
 > [Open questions for reviewers](#open-questions-for-reviewers).
 
-**Version: v1.1** (patch series 0001–0010; v1.0 = 0001–0009). New since the 5-patch
-review round: Kokkos `/kk` variants of both styles (patches 0006–0009), a `check`
-per-block consistency-verification keyword, and `reset_timestep`-safe block scheduling
-(patch 0010).
+**Version: v1.2** (patch series 0001–0012; v1.1 = 0001–0010, v1.0 = 0001–0009).
 
-**Validation:** 44 local tests pass (geometry, Langmuir isotherm, round-trip energy
+New in v1.2 (2026-08-29, from debugging a 1024-rank production abort
+`sum of nlocal != natoms` on a Ni–H discharge leg): **patch 0011** adds per-trial
+parallel-invariant diagnostics — an unconditional assertion that exactly one rank owns
+every trial, and (under `check yes`) per-trial bitwise rank-uniformity checks of the
+accept decision and all its inputs, plus block-start checks that attribute count
+corruption to its true source (MD segment, genuine boundary atom loss, or the MC
+itself). **Patch 0012** fixes the defects the investigation confirmed: the chemical
+potential, temperature and every full-energy evaluation are now broadcast from MPI
+rank 0 (the Metropolis inputs are bit-identical on all ranks *by construction* — a
+one-ulp cross-rank divergence provably cascades into the observed count corruption,
+reproduced deterministically at np=2 by fault injection); non-periodic box-face site
+ownership is reconciled between the compute's emission rule and the fix's ownership
+rule (face-noise clamping + catalogue validation); a restart no longer collapses the
+per-rank velocity-RNG streams onto rank 0's; and a latent out-of-bounds read in source
+mode is guarded. Regression test `tests/test_8_11_natoms_bookkeeping.py` (6 tests)
+covers all of it. Full write-up: `PROGRESS.md` (2026-08-29) and `AUDIT-2026-08-29.md`
+in the project repo.
+
+New since the 5-patch review round (v1.1): Kokkos `/kk` variants of both styles
+(patches 0006–0009), a `check` per-block consistency-verification keyword, and
+`reset_timestep`-safe block scheduling (patch 0010).
+
+**Validation:** 50 local tests pass (geometry, Langmuir isotherm, round-trip energy
 conservation, catalogue rebuild-invariance, a 2¹² brute-force enumeration cross-check,
-hybrid MD/MC, source mode, fix stacking, serial/MPI/BIGBIG consistency, and a high-rank
+hybrid MD/MC, source mode, fix stacking, serial/MPI/BIGBIG consistency, parallel
+count-bookkeeping regression tests with deterministic fault injection, and a high-rank
 regression test). Built and tested against the GRACE fork `thermoatoms/lammps` @
 `24da74cd` (LAMMPS **"11 Feb 2026"**), Apple clang 21 and gcc 13, Open MPI and Intel
 MPI, serial and MPI, SMALLBIG and BIGBIG. On the CPU side the MC acceptance is

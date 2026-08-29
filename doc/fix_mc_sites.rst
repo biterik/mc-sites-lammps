@@ -139,6 +139,26 @@ inconsistent block.  This costs one extra full-energy evaluation per
 block and is intended for validating new potentials, large processor
 counts, or modified builds before production use.
 
+With *check* enabled, the fix additionally verifies at every trial that
+the accept/reject decision and its inputs (chemical potential,
+temperature, and both full energies) are bit-identical on every MPI
+rank, and it verifies the global atom count at every MC block start:
+a count mismatch already present before any trial is attributed to the
+MD segment (or another fix), and atoms lost in the block-start exchange
+are reported as genuine atom loss through a non-periodic boundary
+rather than as an MC bookkeeping error.  Independent of *check*, every
+trial asserts that exactly one processor owns it; the chemical
+potential, temperature, and every full-energy evaluation are broadcast
+from MPI rank 0 so the Metropolis inputs are identical on all ranks by
+construction.
+
+Catalogue sites that no processor's subdomain contains cannot be used:
+positions within a small tolerance of a non-periodic box face
+(floating-point noise of face-adjacent Voronoi vertices) are clamped
+onto the face, and positions genuinely outside the box (possible with
+*sites file*) are removed from the catalogue when it is built, with a
+warning the first time.
+
 .. note::
 
    The MC species atoms must not be time-integrated during the MC
@@ -168,7 +188,11 @@ Restart, fix_modify, output, run start/stop, minimize info
 This fix writes the state of the random number generators and the move
 counters to :doc:`binary restart files <restart>`.  The site catalogue
 itself is derived state and is rebuilt at the first block after a
-restart.
+restart.  The velocity random-number generator is per-rank by
+construction; on a restart each rank re-derives an independent stream
+from the stored state, so inserted-atom velocities after a resume are
+fresh (statistically equivalent) thermal draws rather than a bitwise
+continuation of the interrupted run.
 
 This fix computes a global vector of length 8, accessible by various
 :doc:`output commands <Howto_output>`: (1) trial attempts, (2) accepted
